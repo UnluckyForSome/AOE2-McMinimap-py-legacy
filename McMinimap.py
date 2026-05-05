@@ -9,9 +9,11 @@ Recorded games (``.mgl``, ``.mgx``, ``.mgz``, ``.aoe2record``):
 Definitive Edition scenarios — AoE2ScenarioParser:
   • .aoe2scenario
 
-Classic scenarios — ``legacy.agescx_legacy`` (AgeScx-derived):
-  • Age of Kings (.scn)
-  • The Conquerors (.scx)
+Classic scenarios (AoK/AoC/HD-era containers, format < 1.36):
+  • Parsed in the browser via a WASM port of `genie-scx`.
+
+DE2 scenarios — AoE2ScenarioParser:
+  • Container format 1.36+ (often saved as .aoe2scenario, but we sniff bytes)
 """
 
 from __future__ import annotations
@@ -307,26 +309,33 @@ def _adapter_from_scenario(input_file: str):
     return SimpleNamespace(map=map_obj, players=players, gaia=gaia)
 
 
-def _adapter_from_agescx(input_file: str):
-    """Classic .scn / .scx via ``legacy.agescx_legacy``."""
-    from legacy.agescx_legacy import Scenario
+def _adapter_from_geniescx(input_file: str):
+    """Scenario loader for format < 1.36 via Python port of genie-scx."""
+    try:
+        from legacy.geniescx_legacy import Scenario as GenieScenario  # type: ignore  # noqa: PLC0415
+    except Exception:
+        # When importing as a namespace package (e.g. `vendor.aoe2mcminimap.McMinimap`),
+        # the sibling `legacy/` directory is not importable as a top-level module.
+        from vendor.aoe2mcminimap.legacy.geniescx_legacy import (  # type: ignore  # noqa: PLC0415
+            Scenario as GenieScenario,
+        )
 
-    scn = Scenario(input_file)
+    scn = GenieScenario.from_file(input_file)
 
-    width = int(scn.tiles.width)
-    height = int(scn.tiles.height)
+    width = int(scn.map.width)
+    height = int(scn.map.height)
     if width != height:
-        raise ValueError(f"AgeScx scenario map is not square: {width}x{height}")
+        raise ValueError(f"Scenario map is not square: {width}x{height}")
     dim = width
 
     tiles = []
     for y in range(height):
-        for x in range(width):
-            t = scn.tiles[y][x]
+        row = scn.map.tiles[y * width : (y + 1) * width]
+        for x, t in enumerate(row):
             tiles.append(
                 SimpleNamespace(
-                    position=SimpleNamespace(x=int(t.x), y=int(t.y)),
-                    terrain=int(t.type),
+                    position=SimpleNamespace(x=int(x), y=int(y)),
+                    terrain=int(t.terrain),
                     elevation=int(t.elevation),
                 )
             )
@@ -334,21 +343,14 @@ def _adapter_from_agescx(input_file: str):
 
     gaia = []
     player_units = {pid: [] for pid in range(1, 9)}
-
-    for owner in range(0, 9):
-        try:
-            units = scn.units[owner]
-        except Exception:
-            continue
-
-        for u in units:
-            obj_id = int(u.type)
-            x, y = int(u.x), int(u.y)
-
+    by_player = scn.player_objects
+    for owner in range(min(len(by_player), 9)):
+        for u in by_player[owner]:
+            obj_id = int(u.object_type)
+            x, y = int(u.position[0]), int(u.position[1])
             if owner == 0:
                 gaia.append(SimpleNamespace(object_id=obj_id, position=SimpleNamespace(x=x, y=y)))
                 continue
-
             unit_ns = SimpleNamespace(
                 object_id=obj_id,
                 class_id=80 if obj_id in wall_objects else 0,
@@ -359,12 +361,21 @@ def _adapter_from_agescx(input_file: str):
 
     players = []
     for pid in range(1, 9):
+        # Pull player color + starting view location from ScenarioPlayerData when available.
+        pos_x, pos_y = None, None
+        civ_name = "Unknown"
+        try:
+            sp = scn.scenario_players[pid - 1]
+            if sp and sp.location:
+                pos_x, pos_y = int(sp.location[0]), int(sp.location[1])
+        except Exception:
+            pass
         players.append(
             SimpleNamespace(
                 color_id=min(max(0, pid - 1), 7),
                 objects=player_units[pid],
-                position=SimpleNamespace(x=None, y=None),
-                civilization="Unknown",
+                position=SimpleNamespace(x=pos_x, y=pos_y),
+                civilization=civ_name,
             )
         )
 
@@ -559,18 +570,54 @@ def get_mgz(input_file: str):
         ) from e2
 
 
+def _sniff_scx_format_version_tuple_from_file(input_file: str) -> tuple[int, int] | None:
+    """Try to read the outer 4-byte SCX format version like b'1.21' or b'1.36'.
+
+    Returns (major, minor) where minor is two digits, or None if the file does not look like SCX.
+    """
+    try:
+        with open(input_file, "rb") as f:
+            b = f.read(4)
+    except OSError:
+        return None
+    if len(b) != 4:
+        return None
+    # Expect ASCII digit '.' digit digit
+    if not (48 <= b[0] <= 57 and b[1] == 46 and 48 <= b[2] <= 57 and 48 <= b[3] <= 57):
+        return None
+    try:
+        major = int(chr(b[0]))
+        minor = (int(chr(b[2])) * 10) + int(chr(b[3]))
+        return major, minor
+    except Exception:
+        return None
+
+
 def read_map(input_file: str):
-    """Load map/player data. Raises ValueError for unknown extensions."""
+    """Load map/player data.
+
+    Scenario routing is **content-sniffed** (outer SCX version), not based on file extension.
+    For DE2 container format >= 1.36, we use AoE2ScenarioParser as the scenario loader.
+    """
     suffix = Path(input_file).suffix.lower()
-    if not suffix:
-        raise ValueError(
-            f"No file extension: {input_file!r}. "
-            f"Supported: {', '.join(sorted(_ALL_SUPPORTED_EXTENSIONS))}"
-        )
+
+    # Recordings are still routed by extension.
+    if suffix in RECORDED_GAME_EXTENSIONS:
+        return get_mgz(input_file)
+
+    fmt = _sniff_scx_format_version_tuple_from_file(input_file)
+    if fmt is not None:
+        major, minor = fmt
+        # DE2 scenarios: outer SCX format 1.36+
+        if major == 1 and minor >= 36:
+            return _adapter_from_scenario(input_file)
+        return _adapter_from_geniescx(input_file)
+
+    # If it doesn't look like SCX, allow explicit extension-based scenario routing for older flows.
     if suffix in DEFINITIVE_SCENARIO_EXTENSIONS:
         return _adapter_from_scenario(input_file)
     if suffix in LEGACY_SCENARIO_EXTENSIONS:
-        return _adapter_from_agescx(input_file)
+        return _adapter_from_geniescx(input_file)
     if suffix in RECORDED_GAME_EXTENSIONS:
         return get_mgz(input_file)
     raise ValueError(
@@ -1018,21 +1065,18 @@ def create_transparency_mask(canvas):
     return canvas.getchannel("A").point(lambda p: 255 if p == 0 else 0)
 
 
-def save_minimap(
-    input_file: str,
+def render_match(
+    match: SimpleNamespace,
     *,
     output_path: str | None = None,
-    verbose: bool = False,
     final_size: tuple[int, int] | None = None,
 ):
-    """Render a minimap from a recording or scenario. If ``output_path`` is set, write PNG there; always returns the PIL image.
+    """Render a minimap from an in-memory ``match`` (same shape as ``read_map`` returns).
 
-    ``final_size`` (optional): if given, the composed image is rescaled to exactly WxH. If omitted,
-    output dimensions follow ``multiplier_integer``, ``angle``, and ``orthographic_ratio`` only.
+    ``match`` must provide ``.map`` (``dimension``, ``tiles``), ``.players``, and ``.gaia`` in the
+    same layout as the adapters built by ``read_map``. Use this when map data comes from a source
+    other than a supported file on disk (e.g. RMS evaluation bridged from genie-rms).
     """
-    if verbose:
-        print(f"Input file: {input_file}")
-    match = read_map(input_file)
     map_obj = match.map
     players = match.players
     gaia = match.gaia
@@ -1122,6 +1166,24 @@ def save_minimap(
     return canvas
 
 
+def save_minimap(
+    input_file: str,
+    *,
+    output_path: str | None = None,
+    verbose: bool = False,
+    final_size: tuple[int, int] | None = None,
+):
+    """Render a minimap from a recording or scenario. If ``output_path`` is set, write PNG there; always returns the PIL image.
+
+    ``final_size`` (optional): if given, the composed image is rescaled to exactly WxH. If omitted,
+    output dimensions follow ``multiplier_integer``, ``angle``, and ``orthographic_ratio`` only.
+    """
+    if verbose:
+        print(f"Input file: {input_file}")
+    match = read_map(input_file)
+    return render_match(match, output_path=output_path, final_size=final_size)
+
+
 def to_image(input_file: str, *, settings: MinimapSettings | None = None):
     """Render to an in-memory PIL image. Uses ``emblems/`` beside this module unless overridden."""
     s = settings or MinimapSettings()
@@ -1129,8 +1191,22 @@ def to_image(input_file: str, *, settings: MinimapSettings | None = None):
         return save_minimap(input_file, output_path=None, verbose=False, final_size=s.final_size)
 
 
+def to_image_from_match(match: SimpleNamespace, *, settings: MinimapSettings | None = None):
+    """Like ``to_image`` but takes a prebuilt ``match`` (see ``render_match``)."""
+    s = settings or MinimapSettings()
+    with _apply_settings(s):
+        return render_match(match, output_path=None, final_size=s.final_size)
+
+
 def to_png_bytes(input_file: str, *, settings: MinimapSettings | None = None) -> bytes:
     img = to_image(input_file, settings=settings)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def to_png_bytes_from_match(match: SimpleNamespace, *, settings: MinimapSettings | None = None) -> bytes:
+    img = to_image_from_match(match, settings=settings)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
@@ -1204,8 +1280,11 @@ def create_civ_icon_canvas(players, original_map_dimension):
 __all__ = [
     "MinimapSettings",
     "read_map",
+    "render_match",
     "to_image",
+    "to_image_from_match",
     "to_png_bytes",
+    "to_png_bytes_from_match",
     "save_minimap",
     "update_aoc_reference_cache",
     "RECORDED_GAME_EXTENSIONS",
