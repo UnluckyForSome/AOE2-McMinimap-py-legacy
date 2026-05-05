@@ -1,19 +1,19 @@
 """
-McMinimap: AoE2 minimap renderer from recorded games or scenarios (DE / legacy).
+McMinimap: AoE2 minimap renderer from recorded games or scenarios (DE + legacy).
 
-Recorded games (``.mgl``, ``.mgx``, ``.mgz``, ``.aoe2record``):
-  1) Vendored happyleaves [aoc-mgz](https://github.com/happyleavesaoc/aoc-mgz) **header-only** path in ``legacy.mgz_legacy.summary.mcminimap_light`` (tiles + initial objects + roster; no body scan).
-  2) Happyleaves ``FullSummary`` (construct header + ``fast`` body walk — same as ``legacy.mgz_legacy.summary.Summary`` today).
-  3) Pip [mgz-fast](https://github.com/AoEInsights/mgz-fast) ``mgz.fast.header.parse``. See ``requirements.txt``.
+This is a standalone library/module: it renders minimaps from local files and
+uses only bundled project data in ``data/mcminimap_constants.json`` (no
+automatic downloads).
 
-Definitive Edition scenarios — AoE2ScenarioParser:
-  • .aoe2scenario
+Recorded games (``.mgl``, ``.mgx``, ``.mgz``, ``.aoe2record``) are parsed via:
+  1) happyleaves [aoc-mgz](https://github.com/happyleavesaoc/aoc-mgz) header-only adapter
+  2) happyleaves ``FullSummary`` (construct header + fast body walk)
+  3) AoEInsights [mgz-fast](https://github.com/AoEInsights/mgz-fast) header parse fallback
 
-Classic scenarios (AoK/AoC/HD-era containers, format < 1.36):
-  • Parsed in the browser via a WASM port of `genie-scx`.
-
-DE2 scenarios — AoE2ScenarioParser:
-  • Container format 1.36+ (often saved as .aoe2scenario, but we sniff bytes)
+Scenarios (SCN/SCX/DE containers) are routed by content sniffing (outer scenario
+version bytes:
+  - legacy formats (< 1.36): parsed by ``legacy/geniescx_legacy.py``
+  - DE2 containers (>= 1.36): parsed by AoE2ScenarioParser
 """
 
 from __future__ import annotations
@@ -31,34 +31,13 @@ from typing import Literal
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 DATA_DIR = PACKAGE_DIR / "data"
-AOC_DATASET_100_PATH = DATA_DIR / "aoc_dataset_100.json"
-AOC_CONSTANTS_PATH = DATA_DIR / "aoc_constants.json"
 MCMINIMAP_CONSTANTS_PATH = DATA_DIR / "mcminimap_constants.json"
-AOC_DATASET_100_URL = (
-    "https://raw.githubusercontent.com/SiegeEngineers/aoc-reference-data/master/data/datasets/100.json"
-)
-AOC_CONSTANTS_URL = (
-    "https://raw.githubusercontent.com/SiegeEngineers/aoc-reference-data/master/data/constants.json"
-)
-
-_UPDATE_HINT = "Run: py McMinimap.py --updateconstants"
-
-
-def _require_local_data_json() -> None:
-    missing = [
-        p
-        for p in (AOC_DATASET_100_PATH, AOC_CONSTANTS_PATH, MCMINIMAP_CONSTANTS_PATH)
-        if not p.is_file()
-    ]
-    if missing:
-        lines = "\n".join(f"  - {p}" for p in missing)
-        raise RuntimeError(
-            f"Missing required local JSON data file(s):\n{lines}\n\n{_UPDATE_HINT}"
-        )
-
-
-if "--updateconstants" not in sys.argv:
-    _require_local_data_json()
+if not MCMINIMAP_CONSTANTS_PATH.is_file():
+    raise RuntimeError(
+        "Missing required local JSON data file: "
+        f"{MCMINIMAP_CONSTANTS_PATH}\n\n"
+        "This file is bundled project data and is not downloaded automatically."
+    )
 
 from PIL import Image, ImageDraw
 
@@ -83,6 +62,7 @@ def _load_mcminimap_tables():
     tc_pos = raw["town_center_position_object_ids"]
     tc_pos_tuple = tuple(int(x) for x in tc_pos)
     town_center_skip = frozenset(int(k) for k in raw["town_center_objects"])
+    civs_by_id = {int(k): str(v) for k, v in raw.get("civilizations_by_id", {}).items()}
     return (
         tuple(raw["player_colors"]),
         _int_key_tile_dict(raw["tiles_colors"]),
@@ -94,6 +74,7 @@ def _load_mcminimap_tables():
         _int_key_str_dict(raw["cliff_objects"]),
         tc_pos_tuple,
         town_center_skip,
+        civs_by_id,
     )
 
 
@@ -131,65 +112,14 @@ def _cli_collect_batch_jobs(input_dir: Path, output_dir: Path) -> list[tuple[Pat
     return jobs
 
 
-# ---------------------------------------------------------------------------
-# Reference data (civilization names for recorded-game headers)
-# ---------------------------------------------------------------------------
-
-_aoc_dataset_100 = None
-_aoc_constants = None
-
-
-def _load_aoc_reference_data():
-    """Load SiegeEngineers aoc-reference-data from local data/*.json (no network)."""
-    global _aoc_dataset_100, _aoc_constants
-    if _aoc_dataset_100 is not None:
-        return _aoc_dataset_100, _aoc_constants
-
-    try:
-        with open(AOC_DATASET_100_PATH, encoding="utf-8") as f:
-            _aoc_dataset_100 = json.load(f)
-        with open(AOC_CONSTANTS_PATH, encoding="utf-8") as f:
-            _aoc_constants = json.load(f)
-    except OSError as e:
-        raise RuntimeError(
-            f"Could not read AoE reference JSON ({e}).\n{_UPDATE_HINT}"
-        ) from e
-
-    return _aoc_dataset_100, _aoc_constants
-
-
-def update_aoc_reference_cache() -> None:
-    """Download aoc_dataset_100.json and aoc_constants.json from SiegeEngineers aoc-reference-data."""
-    import urllib.request
-
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    for url, path in (
-        (AOC_DATASET_100_URL, AOC_DATASET_100_PATH),
-        (AOC_CONSTANTS_URL, AOC_CONSTANTS_PATH),
-    ):
-        print(f"Fetching {url} ...")
-        with urllib.request.urlopen(url, timeout=120) as r:
-            path.write_bytes(r.read())
-        print(f"Wrote {path} ({path.stat().st_size} bytes)")
-
-    if not MCMINIMAP_CONSTANTS_PATH.is_file():
-        raise RuntimeError(
-            f"After download, {MCMINIMAP_CONSTANTS_PATH} is still missing. "
-            "That file is project data (not downloaded); restore it from the repository."
-        )
-
-    global _aoc_dataset_100, _aoc_constants
-    _aoc_dataset_100 = None
-    _aoc_constants = None
-
-
 def _civ_name_from_id(civilization_id):
     if civilization_id is None:
         return "Unknown"
-    dataset, _ = _load_aoc_reference_data()
-    civs = dataset.get("civilizations", {})
-    entry = civs.get(str(civilization_id))
-    return entry.get("name", "Unknown") if isinstance(entry, dict) else "Unknown"
+    try:
+        civ_id = int(civilization_id)
+    except Exception:
+        return "Unknown"
+    return CIVILIZATIONS_BY_ID.get(civ_id, "Unknown")
 
 
 (
@@ -203,6 +133,7 @@ def _civ_name_from_id(civilization_id):
     cliff_objects,
     TC_IDS,
     TOWN_CENTER_OBJECT_IDS,
+    CIVILIZATIONS_BY_ID,
 ) = _load_mcminimap_tables()
 
 
@@ -613,13 +544,8 @@ def read_map(input_file: str):
             return _adapter_from_scenario(input_file)
         return _adapter_from_geniescx(input_file)
 
-    # If it doesn't look like SCX, allow explicit extension-based scenario routing for older flows.
-    if suffix in DEFINITIVE_SCENARIO_EXTENSIONS:
-        return _adapter_from_scenario(input_file)
-    if suffix in LEGACY_SCENARIO_EXTENSIONS:
-        return _adapter_from_geniescx(input_file)
-    if suffix in RECORDED_GAME_EXTENSIONS:
-        return get_mgz(input_file)
+    # If it doesn't look like SCX, we currently do not attempt any extension-based scenario routing.
+    # The legacy `geniescx_legacy` adapter is expected to be sufficient when SCX bytes are present.
     raise ValueError(
         f"Unsupported file type {suffix!r} for {input_file!r}. "
         f"Supported extensions: {', '.join(sorted(_ALL_SUPPORTED_EXTENSIONS))}"
@@ -1286,7 +1212,6 @@ __all__ = [
     "to_png_bytes",
     "to_png_bytes_from_match",
     "save_minimap",
-    "update_aoc_reference_cache",
     "RECORDED_GAME_EXTENSIONS",
     "DEFINITIVE_SCENARIO_EXTENSIONS",
     "LEGACY_SCENARIO_EXTENSIONS",
@@ -1295,11 +1220,6 @@ __all__ = [
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Render an AoE2 minimap from a scenario/recording.")
-    parser.add_argument(
-        "--updateconstants",
-        action="store_true",
-        help="Download aoc-reference-data JSON into data/ (no render; no --input).",
-    )
     parser.add_argument(
         "--input",
         required=False,
@@ -1353,14 +1273,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.updateconstants:
-        if args.input is not None or args.output is not None:
-            parser.error("--updateconstants cannot be used with --input or --output")
-        update_aoc_reference_cache()
-        sys.exit(0)
-
     if not args.input:
-        parser.error("--input is required (unless using --updateconstants)")
+        parser.error("--input is required")
 
     input_path = Path(args.input).expanduser()
     if not input_path.exists():
