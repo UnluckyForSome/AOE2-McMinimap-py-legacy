@@ -31,6 +31,8 @@ pip install -r requirements.txt
 
 Recorded games try, in order: **happyleaves header-only** (`legacy/mgz_legacy/summary/mcminimap_light.py`), then vendored **`FullSummary`**, then pip [AoEInsights mgz-fast](https://github.com/AoEInsights/mgz-fast) (`mgz.fast.header.parse`). No PyPI `mgz` (happyleaves) install.
 
+Classic **`.scn` / `.scx`** scenarios use [genie-scx-py](https://github.com/UnluckyForSome/genie-scx-py) (Rust-aligned pure Python parser). **`.aoe2scenario`** uses [AoE2ScenarioParser](https://github.com/KSneijders/AoE2ScenarioParser).
+
 ---
 
 ## Command line
@@ -118,20 +120,7 @@ Anything else raises `ValueError` from `read_map()`.
 
 ## Data under `data/`
 
-Rendering uses JSON in **`data/`**:
-
-| File | Role |
-|------|------|
-| `mcminimap_constants.json` | Terrain colors, object ID sets (ships with the repo) |
-| `aoc_dataset_100.json`, `aoc_constants.json` | Civilization names for replays ([SiegeEngineers aoc-reference-data](https://github.com/SiegeEngineers/aoc-reference-data)) |
-
-If the two `aoc_*.json` files are missing, importing the module fails until you either restore them from the repo or refresh them:
-
-```bash
-python McMinimap.py --updateconstants
-```
-
-From code: `from McMinimap import update_aoc_reference_cache` then `update_aoc_reference_cache()`.
+Rendering uses **`data/mcminimap_constants.json`** (terrain colors, object ID sets, civilization names for replay headers via `civilizations_by_id`). That file ships with the repo.
 
 ---
 

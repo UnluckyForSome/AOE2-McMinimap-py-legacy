@@ -12,8 +12,8 @@ Recorded games (``.mgl``, ``.mgx``, ``.mgz``, ``.aoe2record``) are parsed via:
 
 Scenarios (SCN/SCX/DE containers) are routed by content sniffing (outer scenario
 version bytes:
-  - legacy formats (< 1.36): parsed by ``legacy/geniescx_legacy.py``
-  - DE2 containers (>= 1.36): parsed by AoE2ScenarioParser
+  - legacy formats (< 1.35): parsed by the ``genie-scx-py`` package (``import genie_scx_py``)
+  - DE2 containers (>= 1.35): parsed by AoE2ScenarioParser
 """
 
 from __future__ import annotations
@@ -176,6 +176,30 @@ def _suppress_aoe2scenario_parser_output():
 # ---------------------------------------------------------------------------
 
 
+def _import_genie_scx_py_scenario():
+    """Load :class:`genie_scx_py.scenario.Scenario` from pip, ``pylibs/`` (Pyodide bundle), or editable install."""
+    try:
+        from genie_scx_py.scenario import Scenario  # type: ignore
+
+        return Scenario
+    except ImportError:
+        pass
+    pkg = Path(__file__).resolve().parent
+    pylibs = pkg / "pylibs"
+    if (pylibs / "genie_scx_py").is_dir():
+        s = str(pylibs)
+        if s not in sys.path:
+            sys.path.insert(0, s)
+        from genie_scx_py.scenario import Scenario  # type: ignore
+
+        return Scenario
+    raise ImportError(
+        "genie_scx_py not found: pip install genie-scx-py "
+        "(see https://github.com/UnluckyForSome/genie-scx-py) "
+        "or vendor the package under pylibs/genie_scx_py next to McMinimap.py."
+    )
+
+
 def _adapter_from_scenario(input_file: str):
     """Definitive Edition .aoe2scenario via AoE2ScenarioParser."""
     from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario  # type: ignore
@@ -240,28 +264,22 @@ def _adapter_from_scenario(input_file: str):
     return SimpleNamespace(map=map_obj, players=players, gaia=gaia)
 
 
-def _adapter_from_geniescx(input_file: str):
-    """Scenario loader for format < 1.36 via Python port of genie-scx."""
-    try:
-        from legacy.geniescx_legacy import Scenario as GenieScenario  # type: ignore  # noqa: PLC0415
-    except Exception:
-        # When importing as a namespace package (e.g. `vendor.aoe2mcminimap.McMinimap`),
-        # the sibling `legacy/` directory is not importable as a top-level module.
-        from vendor.aoe2mcminimap.legacy.geniescx_legacy import (  # type: ignore  # noqa: PLC0415
-            Scenario as GenieScenario,
-        )
+def _adapter_from_genie_scx_py(input_file: str):
+    """Legacy SCX (< 1.35 container): parse with ``genie_scx_py`` (Rust-aligned genie-scx port)."""
+    Scenario = _import_genie_scx_py_scenario()
+    with open(input_file, "rb") as f:
+        scn = Scenario.read_from(f)
 
-    scn = GenieScenario.from_file(input_file)
-
-    width = int(scn.map.width)
-    height = int(scn.map.height)
+    m = scn.map()
+    width = int(m.width)
+    height = int(m.height)
     if width != height:
         raise ValueError(f"Scenario map is not square: {width}x{height}")
     dim = width
 
     tiles = []
     for y in range(height):
-        row = scn.map.tiles[y * width : (y + 1) * width]
+        row = m.tiles[y * width : (y + 1) * width]
         for x, t in enumerate(row):
             tiles.append(
                 SimpleNamespace(
@@ -274,7 +292,7 @@ def _adapter_from_geniescx(input_file: str):
 
     gaia = []
     player_units = {pid: [] for pid in range(1, 9)}
-    by_player = scn.player_objects
+    by_player = scn.format.player_objects
     for owner in range(min(len(by_player), 9)):
         for u in by_player[owner]:
             obj_id = int(u.object_type)
@@ -290,15 +308,18 @@ def _adapter_from_geniescx(input_file: str):
             if owner in player_units:
                 player_units[owner].append(unit_ns)
 
+    scenario_players_list = scn.scenario_players()
     players = []
     for pid in range(1, 9):
-        # Pull player color + starting view location from ScenarioPlayerData when available.
         pos_x, pos_y = None, None
         civ_name = "Unknown"
         try:
-            sp = scn.scenario_players[pid - 1]
-            if sp and sp.location:
-                pos_x, pos_y = int(sp.location[0]), int(sp.location[1])
+            sp = scenario_players_list[pid - 1]
+            if sp is not None:
+                if sp.location:
+                    pos_x, pos_y = int(sp.location[0]), int(sp.location[1])
+                if sp.name:
+                    civ_name = str(sp.name)
         except Exception:
             pass
         players.append(
@@ -528,7 +549,7 @@ def read_map(input_file: str):
     """Load map/player data.
 
     Scenario routing is **content-sniffed** (outer SCX version), not based on file extension.
-    For DE2 container format >= 1.36, we use AoE2ScenarioParser as the scenario loader.
+    For DE2 container format >= 1.35, we use AoE2ScenarioParser as the scenario loader.
     """
     suffix = Path(input_file).suffix.lower()
 
@@ -539,13 +560,13 @@ def read_map(input_file: str):
     fmt = _sniff_scx_format_version_tuple_from_file(input_file)
     if fmt is not None:
         major, minor = fmt
-        # DE2 scenarios: outer SCX format 1.36+
-        if major == 1 and minor >= 36:
+        # DE2 scenarios: outer SCX format 1.35+ (AoE2ScenarioParser; early DE / E3 demo uses 1.35)
+        if major == 1 and minor >= 35:
             return _adapter_from_scenario(input_file)
-        return _adapter_from_geniescx(input_file)
+        return _adapter_from_genie_scx_py(input_file)
 
     # If it doesn't look like SCX, we currently do not attempt any extension-based scenario routing.
-    # The legacy `geniescx_legacy` adapter is expected to be sufficient when SCX bytes are present.
+    # Legacy scenarios are handled via ``genie_scx_py`` when the outer container version tuple is present.
     raise ValueError(
         f"Unsupported file type {suffix!r} for {input_file!r}. "
         f"Supported extensions: {', '.join(sorted(_ALL_SUPPORTED_EXTENSIONS))}"
