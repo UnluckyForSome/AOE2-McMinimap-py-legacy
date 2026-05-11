@@ -1,13 +1,15 @@
 """AoE II minimap rendering from scenarios and recorded games."""
 
-from .readers import read_map
+from .readers import match_from_parsed_scenario, read_map
 from .render import (
     render_match,
     save_minimap,
     to_image,
     to_image_from_match,
+    to_image_from_parsed_scenario,
     to_png_bytes,
     to_png_bytes_from_match,
+    to_png_bytes_from_parsed_scenario,
 )
 from .resources import DEFINITIVE_SCENARIO_EXTENSIONS, LEGACY_SCENARIO_EXTENSIONS, RECORDED_GAME_EXTENSIONS
 from .settings import MinimapSettings
@@ -17,13 +19,16 @@ __all__ = [
     "LEGACY_SCENARIO_EXTENSIONS",
     "MinimapSettings",
     "RECORDED_GAME_EXTENSIONS",
+    "match_from_parsed_scenario",
     "read_map",
     "render_match",
     "save_minimap",
     "to_image",
     "to_image_from_match",
+    "to_image_from_parsed_scenario",
     "to_png_bytes",
     "to_png_bytes_from_match",
+    "to_png_bytes_from_parsed_scenario",
 ]
 
 __version__ = "0.1.1"

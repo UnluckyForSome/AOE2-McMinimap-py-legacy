@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from PIL import Image, ImageDraw
 
 from . import settings as render_settings
-from .readers import read_map
+from .readers import match_from_parsed_scenario, read_map
 from .resources import (
     TOWN_CENTER_OBJECT_IDS,
     cliff_objects,
@@ -396,6 +396,11 @@ def to_image_from_match(match: SimpleNamespace, *, settings: MinimapSettings | N
         return render_match(match, output_path=None, final_size=s.final_size)
 
 
+def to_image_from_parsed_scenario(parsed_scenario, *, settings: MinimapSettings | None = None):
+    """Render a parser-owned scenario result without re-reading the source file."""
+    return to_image_from_match(match_from_parsed_scenario(parsed_scenario), settings=settings)
+
+
 def to_png_bytes(input_file: str, *, settings: MinimapSettings | None = None) -> bytes:
     img = to_image(input_file, settings=settings)
     buf = io.BytesIO()
@@ -405,6 +410,13 @@ def to_png_bytes(input_file: str, *, settings: MinimapSettings | None = None) ->
 
 def to_png_bytes_from_match(match: SimpleNamespace, *, settings: MinimapSettings | None = None) -> bytes:
     img = to_image_from_match(match, settings=settings)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def to_png_bytes_from_parsed_scenario(parsed_scenario, *, settings: MinimapSettings | None = None) -> bytes:
+    img = to_image_from_parsed_scenario(parsed_scenario, settings=settings)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()

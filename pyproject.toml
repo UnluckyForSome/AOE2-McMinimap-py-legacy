@@ -23,7 +23,6 @@ dependencies = [
     "Pillow",
     "AoE2ScenarioParser",
     "AOE2-McMGZ>=0.1.0",
-    "AOE2-McGenieSCX>=0.1.0",
 ]
 
 [project.optional-dependencies]

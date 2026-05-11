@@ -29,9 +29,8 @@ From [PyPI](https://pypi.org/project/aoe2-mcminimap/) for **AOE2-McMinimap**:
 pip install aoe2-mcminimap
 ```
 
-That installs **AOE2-McGenieSCX**,
-**AoE2ScenarioParser**, and the Museum-maintained
-**`AOE2-McMGZ`** recorded-game parser automatically.
+That installs **AoE2ScenarioParser** for scenario parsing and the
+Museum-maintained **`AOE2-McMGZ`** recorded-game parser automatically.
 
 **Development** (editable install from a clone):
 
@@ -43,7 +42,9 @@ Recorded games use the Museum-maintained
 [**AOE2-McMGZ**](https://github.com/UnluckyForSome/AOE2-McMGZ)
 package via **`mgz.summary.Summary`** (the package still imports as `mgz`).
 
-Classic **`.scn` / `.scx`** scenarios use **AOE2-McGenieSCX**. **`.aoe2scenario`** uses **AoE2ScenarioParser**.
+Scenario routing now goes through **AoE2ScenarioParser** for both
+**classic** (`.scn`, `.scx`) and **DE** (`.aoe2scenario`) containers. Its
+legacy path stays aligned with **AOE2-McGenieSCX**.
 
 ---
 

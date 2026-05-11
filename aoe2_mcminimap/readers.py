@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
 from pathlib import Path
-import sys
 from types import SimpleNamespace
+
+from AoE2ScenarioParser.scenario_parsing import ParsedScenario, parse_scenario
 
 from .resources import (
     ALL_SUPPORTED_EXTENSIONS,
     CIVILIZATIONS_BY_ID,
-    PACKAGE_DIR,
     RECORDED_GAME_EXTENSIONS,
     wall_objects,
 )
@@ -26,71 +25,7 @@ def _civ_name_from_id(civilization_id):
     return CIVILIZATIONS_BY_ID.get(civ_id, "Unknown")
 
 
-@contextmanager
-def _suppress_aoe2scenario_parser_output():
-    try:
-        import AoE2ScenarioParser.helper.printers as printers  # type: ignore
-    except Exception:
-        printers = None
-
-    try:
-        if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
-    if printers is None:
-        yield
-        return
-
-    old_rprint = getattr(printers, "rprint", None)
-    old_s_print = getattr(printers, "s_print", None)
-
-    def _noop(*_args, **_kwargs):
-        return None
-
-    try:
-        printers.rprint = _noop  # type: ignore
-        printers.s_print = _noop  # type: ignore
-        yield
-    finally:
-        if old_rprint is not None:
-            printers.rprint = old_rprint  # type: ignore
-        if old_s_print is not None:
-            printers.s_print = old_s_print  # type: ignore
-
-
-def _import_aoe2_geniescx_scenario():
-    """Load ``aoe2_geniescx.scenario.Scenario`` from pip or a vendored ``pylibs/`` bundle."""
-    try:
-        from aoe2_geniescx.scenario import Scenario  # type: ignore
-
-        return Scenario
-    except ImportError:
-        pass
-
-    pylibs = PACKAGE_DIR / "pylibs"
-    if (pylibs / "aoe2_geniescx").is_dir():
-        s = str(pylibs)
-        if s not in sys.path:
-            sys.path.insert(0, s)
-        from aoe2_geniescx.scenario import Scenario  # type: ignore
-
-        return Scenario
-
-    raise ImportError(
-        "aoe2_geniescx not found: pip install AOE2-McGenieSCX "
-        "or vendor the package under aoe2_mcminimap/pylibs/aoe2_geniescx."
-    )
-
-
-def _adapter_from_scenario(input_file: str):
-    """Definitive Edition ``.aoe2scenario`` via AoE2ScenarioParser."""
-    from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario  # type: ignore
-
-    with _suppress_aoe2scenario_parser_output():
-        scn = AoE2DEScenario.from_file(input_file)
-
+def _match_from_de_scenario(scn):
     mm = scn.map_manager
     dim = int(mm.map_width)
 
@@ -148,12 +83,7 @@ def _adapter_from_scenario(input_file: str):
     return SimpleNamespace(map=map_obj, players=players, gaia=gaia)
 
 
-def _adapter_from_aoe2_geniescx(input_file: str):
-    """Legacy SCX (< 1.35 container) via ``aoe2_geniescx``."""
-    Scenario = _import_aoe2_geniescx_scenario()
-    with open(input_file, "rb") as f:
-        scn = Scenario.read_from(f)
-
+def _match_from_legacy_scenario(scn):
     m = scn.map()
     width = int(m.width)
     height = int(m.height)
@@ -216,6 +146,13 @@ def _adapter_from_aoe2_geniescx(input_file: str):
         )
 
     return SimpleNamespace(map=map_obj, players=players, gaia=gaia)
+
+
+def match_from_parsed_scenario(parsed: ParsedScenario) -> SimpleNamespace:
+    """Convert a parser-owned scenario result into McMinimap's match shape."""
+    if parsed.is_definitive_edition:
+        return _match_from_de_scenario(parsed.scenario)
+    return _match_from_legacy_scenario(parsed.scenario)
 
 
 def _adapter_from_aoc_mgz_summary(s) -> SimpleNamespace:
@@ -303,27 +240,6 @@ def get_mgz(input_file: str):
             return _adapter_from_aoc_mgz_summary(Summary(fh))
         except BaseException as e:  # noqa: BLE001
             raise RuntimeError(f"Could not parse recording with mgz Summary: {e!s}") from e
-
-
-def _sniff_scx_format_version_tuple_from_file(input_file: str) -> tuple[int, int] | None:
-    """Try to read the outer 4-byte SCX format version like ``b'1.21'`` or ``b'1.36'``."""
-    try:
-        with open(input_file, "rb") as f:
-            b = f.read(4)
-    except OSError:
-        return None
-    if len(b) != 4:
-        return None
-    if not (48 <= b[0] <= 57 and b[1] == 46 and 48 <= b[2] <= 57 and 48 <= b[3] <= 57):
-        return None
-    try:
-        major = int(chr(b[0]))
-        minor = (int(chr(b[2])) * 10) + int(chr(b[3]))
-        return major, minor
-    except Exception:
-        return None
-
-
 def read_map(input_file: str):
     """Load map/player data from a supported scenario or recorded game."""
     suffix = Path(input_file).suffix.lower()
@@ -331,17 +247,13 @@ def read_map(input_file: str):
     if suffix in RECORDED_GAME_EXTENSIONS:
         return get_mgz(input_file)
 
-    fmt = _sniff_scx_format_version_tuple_from_file(input_file)
-    if fmt is not None:
-        major, minor = fmt
-        if major == 1 and minor >= 35:
-            return _adapter_from_scenario(input_file)
-        return _adapter_from_aoe2_geniescx(input_file)
+    if suffix not in ALL_SUPPORTED_EXTENSIONS:
+        raise ValueError(
+            f"Unsupported file type {suffix!r} for {input_file!r}. "
+            f"Supported extensions: {', '.join(sorted(ALL_SUPPORTED_EXTENSIONS))}"
+        )
 
-    raise ValueError(
-        f"Unsupported file type {suffix!r} for {input_file!r}. "
-        f"Supported extensions: {', '.join(sorted(ALL_SUPPORTED_EXTENSIONS))}"
-    )
+    parsed = parse_scenario(input_file, suppress_output=True)
+    return match_from_parsed_scenario(parsed)
 
-
-__all__ = ["read_map"]
+__all__ = ["match_from_parsed_scenario", "read_map"]
