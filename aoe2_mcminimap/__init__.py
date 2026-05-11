@@ -1,11 +1,7 @@
 """AoE II minimap rendering from scenarios and recorded games."""
 
-from aoe2_mcminimap.mcminimap import (
-    DEFINITIVE_SCENARIO_EXTENSIONS,
-    LEGACY_SCENARIO_EXTENSIONS,
-    MinimapSettings,
-    RECORDED_GAME_EXTENSIONS,
-    read_map,
+from .readers import read_map
+from .render import (
     render_match,
     save_minimap,
     to_image,
@@ -13,6 +9,8 @@ from aoe2_mcminimap.mcminimap import (
     to_png_bytes,
     to_png_bytes_from_match,
 )
+from .resources import DEFINITIVE_SCENARIO_EXTENSIONS, LEGACY_SCENARIO_EXTENSIONS, RECORDED_GAME_EXTENSIONS
+from .settings import MinimapSettings
 
 __all__ = [
     "DEFINITIVE_SCENARIO_EXTENSIONS",
@@ -28,4 +26,4 @@ __all__ = [
     "to_png_bytes_from_match",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

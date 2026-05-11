@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aoe2-mcminimap"
-version = "0.1.0"
+name = "AOE2-McMinimap"
+version = "0.1.1"
 description = "Static isometric minimaps for Age of Empires II from recordings or scenarios (DE + legacy)."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -21,12 +21,9 @@ classifiers = [
 
 dependencies = [
     "Pillow",
-    "construct==2.8.16",
-    "aocref>=2.0.35",
-    "tabulate>=0.9.0",
     "AoE2ScenarioParser",
-    "mgz-fast",
-    "genie-scx-py>=0.1.0",
+    "AOE2-McMGZ>=0.1.0",
+    "AOE2-McGenieSCX>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -37,7 +34,7 @@ Homepage = "https://github.com/UnluckyForSome/AOE2-McMinimap"
 Repository = "https://github.com/UnluckyForSome/AOE2-McMinimap"
 
 [project.scripts]
-aoe2-mcminimap = "aoe2_mcminimap.mcminimap:main"
+aoe2-mcminimap = "aoe2_mcminimap.cli:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -50,7 +47,6 @@ include = ["aoe2_mcminimap*"]
 aoe2_mcminimap = [
     "data/**/*",
     "emblems/**/*",
-    "legacy/**/*",
 ]
 
 [tool.setuptools.exclude-package-data]
