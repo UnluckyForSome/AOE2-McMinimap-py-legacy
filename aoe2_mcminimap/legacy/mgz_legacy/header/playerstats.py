@@ -2,7 +2,7 @@
 
 from construct import Embedded, Float32l, If, Struct, this, Array
 
-from legacy.mgz_legacy.util import ModVersionAdapter, Version, find_version, find_save_version
+from aoe2_mcminimap.legacy.mgz_legacy.util import ModVersionAdapter, Version, find_version, find_save_version
 
 # pylint: disable=invalid-name
 

@@ -4,10 +4,10 @@ from construct import (Array, Byte, Embedded, Flag, Float32l, If, Int16sl, Int16
                        Int16ul, Int32ub, Int32ul, Padding, Peek, Struct, Int32sl,
                        Switch, Pass, RepeatUntil, Bytes, LazyBound, IfThenElse)
 
-from legacy.mgz_legacy.enums import ObjectEnum, ObjectTypeEnum, ResourceEnum
-from legacy.mgz_legacy.util import Find, Version, find_version, find_save_version, find_type
-from legacy.mgz_legacy.header.unit_type import unit_type
-from legacy.mgz_legacy.header.de import de_string
+from aoe2_mcminimap.legacy.mgz_legacy.enums import ObjectEnum, ObjectTypeEnum, ResourceEnum
+from aoe2_mcminimap.legacy.mgz_legacy.util import Find, Version, find_version, find_save_version, find_type
+from aoe2_mcminimap.legacy.mgz_legacy.header.unit_type import unit_type
+from aoe2_mcminimap.legacy.mgz_legacy.header.de import de_string
 
 # pylint: disable=invalid-name
 

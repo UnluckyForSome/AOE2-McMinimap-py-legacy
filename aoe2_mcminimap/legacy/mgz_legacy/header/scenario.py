@@ -4,9 +4,9 @@ import struct
 from construct import (Array, Float32l, Int16ul, Int32sl, Int32ul, Padding,
                        PascalString, Peek, String, Struct, Bytes, If, IfThenElse)
 
-from legacy.mgz_legacy.enums import DifficultyEnum, PlayerTypeEnum, AgeEnum
-from legacy.mgz_legacy.util import Find, Version, find_save_version, find_version
-from legacy.mgz_legacy.header.de import de_string
+from aoe2_mcminimap.legacy.mgz_legacy.enums import DifficultyEnum, PlayerTypeEnum, AgeEnum
+from aoe2_mcminimap.legacy.mgz_legacy.util import Find, Version, find_save_version, find_version
+from aoe2_mcminimap.legacy.mgz_legacy.header.de import de_string
 
 # pylint: disable=invalid-name, bad-continuation
 

@@ -195,7 +195,7 @@ def _import_genie_scx_py_scenario():
         return Scenario
     raise ImportError(
         "genie_scx_py not found: pip install genie-scx-py "
-        "(see https://github.com/UnluckyForSome/genie-scx-py) "
+        "(PyPI: https://pypi.org/project/genie-scx-py/) "
         "or vendor the package under pylibs/genie_scx_py next to McMinimap.py."
     )
 
@@ -488,14 +488,14 @@ def get_mgz(input_file: str):
     tried: list[str] = []
 
     try:
-        from legacy.mgz_legacy.summary.mcminimap_light import McMinimapLightSummary  # noqa: PLC0415
+        from aoe2_mcminimap.legacy.mgz_legacy.summary.mcminimap_light import McMinimapLightSummary  # noqa: PLC0415
 
         return _adapter_from_aoc_mgz_summary(McMinimapLightSummary(io.BytesIO(raw)))
     except BaseException as e:  # noqa: BLE001 — any failure tries slower paths
         tried.append(f"happyleaves header-only: {e!s}")
 
     try:
-        from legacy.mgz_legacy.summary import Summary  # type: ignore  # noqa: PLC0415
+        from aoe2_mcminimap.legacy.mgz_legacy.summary import Summary  # type: ignore  # noqa: PLC0415
     except ImportError as e:
         tried.append(f"happyleaves Summary import: {e!s}")
     else:
@@ -508,7 +508,7 @@ def get_mgz(input_file: str):
         from mgz.fast.header import parse as _parse  # type: ignore  # noqa: PLC0415
     except ImportError as e:
         raise RuntimeError(
-            "Recorded games need vendored ``legacy.mgz_legacy`` and, when that fails, "
+            "Recorded games need vendored ``aoe2_mcminimap.legacy.mgz_legacy`` and, when that fails, "
             "AoEInsights ``mgz-fast`` (``mgz.fast.header.parse``). "
             "Install: ``pip install -r requirements.txt``. "
             "See https://github.com/happyleavesaoc/aoc-mgz and https://github.com/AoEInsights/mgz-fast"
@@ -1239,7 +1239,7 @@ __all__ = [
 ]
 
 
-if __name__ == "__main__":
+def main() -> None:
     parser = argparse.ArgumentParser(description="Render an AoE2 minimap from a scenario/recording.")
     parser.add_argument(
         "--input",
@@ -1361,3 +1361,7 @@ if __name__ == "__main__":
                 verbose=True,
                 final_size=settings.final_size,
             )
+
+
+if __name__ == "__main__":
+    main()

@@ -4,8 +4,8 @@ from construct import (
     Int64ul, Computed, Embedded, IfThenElse
 )
 
-from legacy.mgz_legacy.enums import VictoryEnum, ResourceLevelEnum, AgeEnum, PlayerTypeEnum, DifficultyEnum
-from legacy.mgz_legacy.util import find_save_version
+from aoe2_mcminimap.legacy.mgz_legacy.enums import VictoryEnum, ResourceLevelEnum, AgeEnum, PlayerTypeEnum, DifficultyEnum
+from aoe2_mcminimap.legacy.mgz_legacy.util import find_save_version
 
 separator = Const(b"\xa3_\x02\x00")
 

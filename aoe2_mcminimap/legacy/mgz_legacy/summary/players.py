@@ -1,6 +1,6 @@
 """Determine player data."""
 
-from legacy.mgz_legacy.summary.objects import TC_IDS
+from aoe2_mcminimap.legacy.mgz_legacy.summary.objects import TC_IDS
 from collections import defaultdict
 
 

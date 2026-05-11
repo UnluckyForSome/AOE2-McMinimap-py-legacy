@@ -6,7 +6,7 @@ import struct
 import uuid
 import zlib
 
-from legacy.mgz_legacy.util import get_version, unpack, Version, as_hex
+from aoe2_mcminimap.legacy.mgz_legacy.util import get_version, unpack, Version, as_hex
 
 PLAYER_END = b'\xff\xff\xff\xff\xff\xff\xff\xff.\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b'
 ZLIB_WBITS = -15

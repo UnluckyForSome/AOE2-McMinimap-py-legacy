@@ -1,8 +1,8 @@
 """Determine dataset."""
 
-import legacy.mgz_legacy as mgz
-from legacy.mgz_legacy.util import Version
-from legacy.mgz_legacy.reference import get_dataset
+import aoe2_mcminimap.legacy.mgz_legacy as mgz
+from aoe2_mcminimap.legacy.mgz_legacy.util import Version
+from aoe2_mcminimap.legacy.mgz_legacy.reference import get_dataset
 
 
 def resolve_hd_version(hd, save_version):

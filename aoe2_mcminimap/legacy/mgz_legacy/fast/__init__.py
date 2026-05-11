@@ -2,9 +2,9 @@
 import io
 import struct
 
-from legacy.mgz_legacy.fast.enums import Operation, Action, Postgame, Age
-from legacy.mgz_legacy.fast.actions import parse_action_71094
-from legacy.mgz_legacy.util import check_flags, unpack
+from aoe2_mcminimap.legacy.mgz_legacy.fast.enums import Operation, Action, Postgame, Age
+from aoe2_mcminimap.legacy.mgz_legacy.fast.actions import parse_action_71094
+from aoe2_mcminimap.legacy.mgz_legacy.util import check_flags, unpack
 
 
 MAX_PLAYERS = 8

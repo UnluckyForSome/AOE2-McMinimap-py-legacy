@@ -1,7 +1,7 @@
 """AI."""
 
-from legacy.mgz_legacy import Version
-from legacy.mgz_legacy.util import Find
+from aoe2_mcminimap.legacy.mgz_legacy import Version
+from aoe2_mcminimap.legacy.mgz_legacy.util import Find
 from construct import (Array, Byte, If, Int16ul, Int32sl, Int32ul, Padding,
                        PascalString, Struct, this, IfThenElse)
 

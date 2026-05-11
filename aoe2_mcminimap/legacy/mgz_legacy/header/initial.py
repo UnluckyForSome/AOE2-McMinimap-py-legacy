@@ -5,10 +5,10 @@
 from construct import (Array, Byte, Embedded, Flag, Float32l, If, Int16ul, Int32sl,
                        Int32ul, Padding, Struct, Tell, this, Bytes, Const, IfThenElse)
 
-from legacy.mgz_legacy.enums import MyDiplomacyEnum, TheirDiplomacyEnum
-from legacy.mgz_legacy.header.objects import existing_object
-from legacy.mgz_legacy.header.playerstats import player_stats
-from legacy.mgz_legacy.util import Find, GotoObjectsEnd, RepeatUpTo, Version, find_save_version, find_version
+from aoe2_mcminimap.legacy.mgz_legacy.enums import MyDiplomacyEnum, TheirDiplomacyEnum
+from aoe2_mcminimap.legacy.mgz_legacy.header.objects import existing_object
+from aoe2_mcminimap.legacy.mgz_legacy.header.playerstats import player_stats
+from aoe2_mcminimap.legacy.mgz_legacy.util import Find, GotoObjectsEnd, RepeatUpTo, Version, find_save_version, find_version
 
 # Player attributes.
 attributes = "attributes"/Struct(

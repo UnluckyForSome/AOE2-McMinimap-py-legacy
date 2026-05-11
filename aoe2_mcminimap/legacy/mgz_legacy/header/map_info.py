@@ -3,7 +3,7 @@
 from construct import (Array, Byte, Computed, Embedded, Flag, IfThenElse,
                        Int32ul, Padding, Struct, Int16sl, If, Peek)
 
-from legacy.mgz_legacy.util import Version, find_save_version
+from aoe2_mcminimap.legacy.mgz_legacy.util import Version, find_save_version
 
 # pylint: disable=invalid-name, bad-continuation
 

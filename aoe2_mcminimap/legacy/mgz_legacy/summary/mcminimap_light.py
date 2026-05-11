@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import io
 
-import legacy.mgz_legacy as hl_mgz
+import aoe2_mcminimap.legacy.mgz_legacy as hl_mgz
 
 
 def profile_ids_for_header(header) -> dict:
     """DE/HD profile ids from header only (same logic as ``FullSummary.get_profile_ids``)."""
-    from legacy.mgz_legacy.util import Version  # noqa: PLC0415
+    from aoe2_mcminimap.legacy.mgz_legacy.util import Version  # noqa: PLC0415
 
     if header.version == Version.DE:
         key = "de"
@@ -51,7 +51,7 @@ class McMinimapLightSummary:
 
     def get_dataset(self):
         if not self._cache["dataset"]:
-            from legacy.mgz_legacy.summary.dataset import get_dataset_data  # noqa: PLC0415
+            from aoe2_mcminimap.legacy.mgz_legacy.summary.dataset import get_dataset_data  # noqa: PLC0415
 
             self._cache["dataset"] = get_dataset_data(self._header)
         self._reference = self._cache["dataset"][1]
@@ -60,7 +60,7 @@ class McMinimapLightSummary:
     def get_map(self):
         if self._cache["map"] is not None:
             return self._cache["map"]
-        from legacy.mgz_legacy.common.map import get_map_data  # noqa: PLC0415
+        from aoe2_mcminimap.legacy.mgz_legacy.common.map import get_map_data  # noqa: PLC0415
 
         h = self._header
         tiles = [(t.terrain_type, t.elevation) for t in h.map_info.tile]
@@ -84,13 +84,13 @@ class McMinimapLightSummary:
         return self._cache["encoding"]
 
     def get_objects(self):
-        from legacy.mgz_legacy.summary.objects import get_objects_data  # noqa: PLC0415
+        from aoe2_mcminimap.legacy.mgz_legacy.summary.objects import get_objects_data  # noqa: PLC0415
 
         return get_objects_data(self._header)
 
     def get_players(self):
-        from legacy.mgz_legacy.summary.players import get_players_data  # noqa: PLC0415
-        from legacy.mgz_legacy.summary.teams import get_teams_data  # noqa: PLC0415
+        from aoe2_mcminimap.legacy.mgz_legacy.summary.players import get_players_data  # noqa: PLC0415
+        from aoe2_mcminimap.legacy.mgz_legacy.summary.teams import get_teams_data  # noqa: PLC0415
 
         h = self._header
         return get_players_data(

@@ -3,7 +3,7 @@ from construct import (
     Struct, Float32l, Int16ul, Byte, Embedded, Switch, If,
     Int32ul, Array, String, Padding, IfThenElse, this
 )
-from legacy.mgz_legacy.util import find_version, find_save_version, Version
+from aoe2_mcminimap.legacy.mgz_legacy.util import find_version, find_save_version, Version
 
 attribute = "attribute"/Struct(
     "type"/Int16ul,

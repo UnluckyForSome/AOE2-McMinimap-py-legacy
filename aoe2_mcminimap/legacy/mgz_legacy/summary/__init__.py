@@ -2,7 +2,7 @@
 
 import logging
 
-from legacy.mgz_legacy.summary.full import FullSummary
+from aoe2_mcminimap.legacy.mgz_legacy.summary.full import FullSummary
 
 logger = logging.getLogger(__name__)
 

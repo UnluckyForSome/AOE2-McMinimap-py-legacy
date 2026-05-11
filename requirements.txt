@@ -1,5 +1,5 @@
-# AoEInsights mgz-fast (``mgz`` on PyPI). Happyleaves parser is vendored as ``legacy/mgz_legacy``;
-# pin the same libs happyleaves ``mgz`` 1.8.51 used with the vendored tree.
+# Runtime deps mirror pyproject.toml (for workflows that still use requirements.txt).
+# Editable dev install: pip install -e .
 
 Pillow
 construct==2.8.16
@@ -7,4 +7,4 @@ aocref>=2.0.35
 tabulate>=0.9.0
 AoE2ScenarioParser
 mgz-fast
-genie-scx-py @ git+https://github.com/UnluckyForSome/genie-scx-py.git
+genie-scx-py>=0.1.0

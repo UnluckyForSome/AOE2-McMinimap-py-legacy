@@ -15,20 +15,20 @@ import zlib
 
 import construct
 
-import legacy.mgz_legacy as mgz
-import legacy.mgz_legacy.body
-from legacy.mgz_legacy import fast
-from legacy.mgz_legacy.util import Version
+import aoe2_mcminimap.legacy.mgz_legacy as mgz
+import aoe2_mcminimap.legacy.mgz_legacy.body
+from aoe2_mcminimap.legacy.mgz_legacy import fast
+from aoe2_mcminimap.legacy.mgz_legacy.util import Version
 
-from legacy.mgz_legacy.const import VALID_BUILDINGS
-from legacy.mgz_legacy.common.map import get_map_data
-from legacy.mgz_legacy.summary.settings import get_settings_data
-from legacy.mgz_legacy.summary.dataset import get_dataset_data
-from legacy.mgz_legacy.summary.teams import get_teams_data
-from legacy.mgz_legacy.summary.players import get_players_data, enrich_de_player_data
-from legacy.mgz_legacy.common.diplomacy import get_diplomacy_data
-from legacy.mgz_legacy.common.chat import get_lobby_chat, parse_chat, Chat
-from legacy.mgz_legacy.summary.objects import get_objects_data
+from aoe2_mcminimap.legacy.mgz_legacy.const import VALID_BUILDINGS
+from aoe2_mcminimap.legacy.mgz_legacy.common.map import get_map_data
+from aoe2_mcminimap.legacy.mgz_legacy.summary.settings import get_settings_data
+from aoe2_mcminimap.legacy.mgz_legacy.summary.dataset import get_dataset_data
+from aoe2_mcminimap.legacy.mgz_legacy.summary.teams import get_teams_data
+from aoe2_mcminimap.legacy.mgz_legacy.summary.players import get_players_data, enrich_de_player_data
+from aoe2_mcminimap.legacy.mgz_legacy.common.diplomacy import get_diplomacy_data
+from aoe2_mcminimap.legacy.mgz_legacy.common.chat import get_lobby_chat, parse_chat, Chat
+from aoe2_mcminimap.legacy.mgz_legacy.summary.objects import get_objects_data
 
 
 LOGGER = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ import json
 import logging
 from enum import Enum
 
-from legacy.mgz_legacy.fast import Age
+from aoe2_mcminimap.legacy.mgz_legacy.fast import Age
 
 LOGGER = logging.getLogger(__name__)
 FEUDAL_AGE_MARKERS = [

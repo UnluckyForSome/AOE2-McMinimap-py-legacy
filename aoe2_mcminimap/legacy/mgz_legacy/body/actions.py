@@ -4,12 +4,12 @@ from construct import (Array, Byte, Const, CString, Flag, Float32l, If,
                        Int16ul, Int32sl, Int32ul, Padding, Peek, String,
                        Struct, this, Bytes, Embedded, IfThenElse)
 
-from legacy.mgz_legacy.body.achievements import achievements
-from legacy.mgz_legacy.enums import (DiplomacyStanceEnum, FormationEnum, GameActionModeEnum,
+from aoe2_mcminimap.legacy.mgz_legacy.body.achievements import achievements
+from aoe2_mcminimap.legacy.mgz_legacy.enums import (DiplomacyStanceEnum, FormationEnum, GameActionModeEnum,
                        OrderTypeEnum, ReleaseTypeEnum, ResourceEnum,
                        ResourceLevelEnum, RevealMapEnum, StanceEnum,
                        AgeEnum, VictoryEnum)
-from legacy.mgz_legacy.util import TimeSecAdapter, check_flags
+from aoe2_mcminimap.legacy.mgz_legacy.util import TimeSecAdapter, check_flags
 
 # pylint: disable=invalid-name, bad-continuation
 

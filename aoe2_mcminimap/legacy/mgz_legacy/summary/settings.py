@@ -1,7 +1,7 @@
 """Determine match settings."""
 
 
-import legacy.mgz_legacy as mgz
+import aoe2_mcminimap.legacy.mgz_legacy as mgz
 def _get_all_techs(postgame, de_data):
     """Get all techs flag."""
     if de_data is not None:

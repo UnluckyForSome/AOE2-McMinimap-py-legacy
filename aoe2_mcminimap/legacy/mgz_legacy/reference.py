@@ -2,7 +2,7 @@
 
 import json
 import pkgutil
-from legacy.mgz_legacy.util import Version
+from aoe2_mcminimap.legacy.mgz_legacy.util import Version
 
 
 REF_PACKAGE = 'aocref'

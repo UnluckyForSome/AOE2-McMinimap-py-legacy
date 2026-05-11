@@ -13,9 +13,9 @@ An Operation can be:
 from construct import (Struct, Byte, Switch, Embedded, Padding,
                        Int32ul, Peek, Tell, Float32l, String, If, Array, Bytes,
                        GreedyBytes, Computed, IfThenElse, Int16ul, Int64ul, Seek, Padded)
-from legacy.mgz_legacy.enums import ActionEnum, OperationEnum
-from legacy.mgz_legacy.body import actions, embedded
-from legacy.mgz_legacy.util import BoolAdapter
+from aoe2_mcminimap.legacy.mgz_legacy.enums import ActionEnum, OperationEnum
+from aoe2_mcminimap.legacy.mgz_legacy.body import actions, embedded
+from aoe2_mcminimap.legacy.mgz_legacy.util import BoolAdapter
 
 
 # pylint: disable=invalid-name, bad-continuation

@@ -1,0 +1,6 @@
+graft aoe2_mcminimap/data
+graft aoe2_mcminimap/emblems
+graft aoe2_mcminimap/legacy
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.pyi

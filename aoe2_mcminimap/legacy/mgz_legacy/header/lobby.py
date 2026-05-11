@@ -2,8 +2,8 @@
 
 from construct import Array, Byte, Bytes, Flag, Int32ul, Padding, Peek, Struct, If, Computed, Embedded, Int32sl
 
-from legacy.mgz_legacy.enums import GameTypeEnum, RevealMapEnum
-from legacy.mgz_legacy.util import Version, find_save_version
+from aoe2_mcminimap.legacy.mgz_legacy.enums import GameTypeEnum, RevealMapEnum
+from aoe2_mcminimap.legacy.mgz_legacy.util import Version, find_save_version
 
 # pylint: disable=invalid-name, bad-continuation
 

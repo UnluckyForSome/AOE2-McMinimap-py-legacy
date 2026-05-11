@@ -2,8 +2,8 @@
 import io
 import struct
 
-from legacy.mgz_legacy.util import unpack, as_hex
-from legacy.mgz_legacy.fast.enums import Action
+from aoe2_mcminimap.legacy.mgz_legacy.util import unpack, as_hex
+from aoe2_mcminimap.legacy.mgz_legacy.fast.enums import Action
 
 
 def parse_action_71094(action_type, player_id, raw):

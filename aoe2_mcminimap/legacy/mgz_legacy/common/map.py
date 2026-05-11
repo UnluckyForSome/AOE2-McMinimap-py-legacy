@@ -1,8 +1,8 @@
 """Map summary."""
 
 import re
-import legacy.mgz_legacy as mgz
-from legacy.mgz_legacy.util import Version
+import aoe2_mcminimap.legacy.mgz_legacy as mgz
+from aoe2_mcminimap.legacy.mgz_legacy.util import Version
 
 
 ENCODING_MARKERS = [

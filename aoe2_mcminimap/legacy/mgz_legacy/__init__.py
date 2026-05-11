@@ -3,16 +3,16 @@
 # pylint: disable=invalid-name,no-name-in-module
 
 from construct import (Struct, CString, Const, Int32ul, Embedded, Float32l, Terminated, If, Computed, this, Peek, Bytes, Int32ub)
-from legacy.mgz_legacy.util import MgzPrefixed, ZlibCompressed, Version, VersionAdapter, get_version, get_save_version
-from legacy.mgz_legacy.header.ai import ai
-from legacy.mgz_legacy.header.replay import replay
-from legacy.mgz_legacy.header.map_info import map_info
-from legacy.mgz_legacy.header.initial import initial
-from legacy.mgz_legacy.header.achievements import achievements
-from legacy.mgz_legacy.header.scenario import scenario
-from legacy.mgz_legacy.header.lobby import lobby
-from legacy.mgz_legacy.header.de import de
-from legacy.mgz_legacy.header.hd import hd
+from aoe2_mcminimap.legacy.mgz_legacy.util import MgzPrefixed, ZlibCompressed, Version, VersionAdapter, get_version, get_save_version
+from aoe2_mcminimap.legacy.mgz_legacy.header.ai import ai
+from aoe2_mcminimap.legacy.mgz_legacy.header.replay import replay
+from aoe2_mcminimap.legacy.mgz_legacy.header.map_info import map_info
+from aoe2_mcminimap.legacy.mgz_legacy.header.initial import initial
+from aoe2_mcminimap.legacy.mgz_legacy.header.achievements import achievements
+from aoe2_mcminimap.legacy.mgz_legacy.header.scenario import scenario
+from aoe2_mcminimap.legacy.mgz_legacy.header.lobby import lobby
+from aoe2_mcminimap.legacy.mgz_legacy.header.de import de
+from aoe2_mcminimap.legacy.mgz_legacy.header.hd import hd
 
 
 compressed_header = Struct(

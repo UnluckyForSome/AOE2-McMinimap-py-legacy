@@ -3,7 +3,7 @@
 from construct import (Array, Byte, Flag, Int16ul, Int32sl, Int32ul, Padding,
                        Peek, Struct, Bytes)
 
-from legacy.mgz_legacy.util import TimeSecAdapter
+from aoe2_mcminimap.legacy.mgz_legacy.util import TimeSecAdapter
 
 # pylint: disable=invalid-name
 

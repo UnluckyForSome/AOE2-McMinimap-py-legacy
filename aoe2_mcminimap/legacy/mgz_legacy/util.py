@@ -10,7 +10,7 @@ from io import BytesIO
 import construct.core
 from construct import Adapter, Construct, Subconstruct, Tunnel
 
-from legacy.mgz_legacy import const
+from aoe2_mcminimap.legacy.mgz_legacy import const
 
 
 # pylint: disable=abstract-method,protected-access

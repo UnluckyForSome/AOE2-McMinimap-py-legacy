@@ -16,7 +16,7 @@ This section is a work in progress.
 from construct import (Array, Computed, Embedded, GreedyBytes, If, Int16ul,
                        Int32ul, Padding, Peek, String, Struct, Switch)
 
-from legacy.mgz_legacy import subheader
+from aoe2_mcminimap.legacy.mgz_legacy import subheader
 
 # pylint: disable=invalid-name
 
