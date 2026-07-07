@@ -228,14 +228,35 @@ def draw_player_tcs(canvas, players, original_map_dimension, after_rotation):
         _draw_square_marker(draw, cx, cy, render_settings.town_center_size, col)
 
 
+# Nested 1px outlines (outer → inner). Inset N requires canvas size ≥ 2N + 1.
+_BORDER_OUTLINE_COLORS = (
+    "rgb(0, 0, 0)",
+    "rgb(157, 135, 114)",
+    "rgb(215, 182, 151)",
+    "rgb(31, 31, 31)",
+)
+# Draw borders at least this large, then scale to the map edge (keeps 4 rings on 6×6 maps).
+_MIN_BORDER_SOURCE_DIMENSION = 8
+
+
+def _draw_border_outlines(draw: ImageDraw.ImageDraw, width: int, height: int) -> None:
+    """Draw as many nested outline rects as fit; skip insets that would invert (x1 < x0)."""
+    max_inset = min(width, height) // 2
+    for inset, color in enumerate(_BORDER_OUTLINE_COLORS):
+        if inset > max_inset:
+            break
+        x0, y0 = inset, inset
+        x1, y1 = width - inset, height - inset
+        if x1 < x0 or y1 < y0:
+            break
+        draw.rectangle([(x0, y0), (x1, y1)], outline=color, width=1)
+
+
 def create_border_canvas(original_map_dimension):
-    border_canvas = Image.new("RGBA", (original_map_dimension, original_map_dimension))
+    source_dim = max(int(original_map_dimension), _MIN_BORDER_SOURCE_DIMENSION)
+    border_canvas = Image.new("RGBA", (source_dim, source_dim))
     draw = ImageDraw.Draw(border_canvas)
-    w, h = border_canvas.width - 1, border_canvas.height - 1
-    draw.rectangle([(0, 0), (w, h)], outline="rgb(0, 0, 0)", width=1)
-    draw.rectangle([(1, 1), (w - 1, h - 1)], outline="rgb(157, 135, 114)", width=1)
-    draw.rectangle([(2, 2), (w - 2, h - 2)], outline="rgb(215, 182, 151)", width=1)
-    draw.rectangle([(3, 3), (w - 3, h - 3)], outline="rgb(31, 31, 31)", width=1)
+    _draw_border_outlines(draw, border_canvas.width - 1, border_canvas.height - 1)
 
     edge = (original_map_dimension + render_settings.border_spacing * 2) * render_settings.multiplier_integer
     border_canvas = border_canvas.resize(
